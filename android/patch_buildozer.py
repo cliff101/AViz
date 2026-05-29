@@ -24,7 +24,11 @@ EXCLUDE_DIRS = "tests,scripts,.github,.buildozer,deployment,wheels,.venv,.git"
 # p4a numpy recipe requires ndk-api >= 24 (buildozer: android.minapi)
 NDK_MIN_API = "24"
 P4A_HOOK = "android/p4a_hook.py"
-MANIFEST_APP_ARGS_FILE = "android/extra_manifest_application_arguments.xml"
+
+
+def _remove_option(lines: list[str], key: str) -> None:
+    prefix = f"{key} ="
+    lines[:] = [ln for ln in lines if not ln.strip().startswith(prefix)]
 
 
 def _pin_python311(parts: list[str]) -> list[str]:
@@ -118,16 +122,13 @@ def patch(spec_path: Path) -> None:
     _upsert(lines, "source.exclude_dirs", EXCLUDE_DIRS, section="app")
     _upsert(lines, "log_level", "2", section="buildozer")
     _upsert(lines, "p4a.hook", P4A_HOOK, section="app")
-    _upsert(
-        lines,
-        "android.extra_manifest_application_arguments",
-        MANIFEST_APP_ARGS_FILE,
-        section="app",
-    )
+    # Do not set android.extra_manifest_application_arguments: buildozer 1.5.0
+    # double-escapes values and breaks Gradle (see kivy/buildozer#1611). 16 KB
+    # pageSizeCompat is injected by android/p4a_hook.py instead.
+    _remove_option(lines, "android.extra_manifest_application_arguments")
 
     _dedupe_option(lines, "android.permissions")
     _dedupe_option(lines, "p4a.hook")
-    _dedupe_option(lines, "android.extra_manifest_application_arguments")
 
     spec_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 

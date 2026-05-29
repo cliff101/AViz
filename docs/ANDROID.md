@@ -6,7 +6,7 @@ AViz can be packaged as an Android APK using **PySide6** and `pyside6-android-de
 
 Many newer phones use **16 KB memory pages**. The PySide6 Qt libraries in the APK must use **16 KB ELF alignment**, or Android blocks the app. You may see a dialog: *「這個應用程式不支援 16 KB」* / *ELF alignment check failed*.
 
-**New APKs** (built after the CI fix) include `android:pageSizeCompat="enabled"` in the manifest and bundle **`libpython3.11.so`** to match the cp311 PySide6 wheels. An APK built only by `pyside6-android-deploy` (before `patch_buildozer.py` + `buildozer android debug`) can still show this dialog and crash with `libpython3.11.so not found`.
+**New APKs** (built after the CI fix) include `android:pageSizeCompat="enabled"` in the manifest (via `android/p4a_hook.py`, not buildozer’s manifest-args file — that path breaks Gradle) and bundle **`libpython3.11.so`** to match the cp311 PySide6 wheels. An APK built only by `pyside6-android-deploy` (before `patch_buildozer.py` + `buildozer android debug`) can still show this dialog and crash with `libpython3.11.so not found`.
 
 **Without rebuilding**, on the phone: **Settings → Apps → AViz → Advanced** → enable **Run app with page size compat mode** (wording may vary), then open AViz again. That bypasses the dialog but does **not** fix a missing `libpython3.11.so`; you still need a rebuilt APK.
 

@@ -15,9 +15,16 @@ def after_apk_build(toolchain) -> None:
         return
 
     text = manifest.read_text(encoding="utf-8")
-    if PAGE_SIZE_ATTR in text or "pageSizeCompat" in text:
+    if PAGE_SIZE_ATTR in text:
         print("p4a_hook: pageSizeCompat already in AndroidManifest.xml")
         return
+
+    # Strip broken attributes from buildozer's escaped extra-manifest-application-arguments.
+    text = re.sub(
+        r'\s*android:pageSizeCompat=(?:\\"enabled\\"|"enabled")\s*',
+        " ",
+        text,
+    )
 
     new_text, count = re.subn(
         r"(<application\b[^>]*)(>)",

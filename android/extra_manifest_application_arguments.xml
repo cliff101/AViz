@@ -1,1 +1,3 @@
+# Unused — buildozer 1.5.0 double-escapes this and breaks Gradle.
+# 16 KB compat is applied by android/p4a_hook.py instead.
 android:pageSizeCompat="enabled"
