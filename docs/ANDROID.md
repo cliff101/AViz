@@ -72,12 +72,9 @@ Enable “Install unknown apps” for your file manager, copy `AViz-debug.apk` t
 
 The most common cause was a **missing `soundfile` module** at import time: `PlayerTab` loads `aviz.audio.decoder`, which used to `import soundfile` at module level even though the APK does not bundle it. Rebuild from a commit that lazy-imports `soundfile` (WAV analysis still works via the stdlib).
 
-On crash, AViz shows an **Android alert dialog** and toast. Logs are written to:
+On crash, AViz should show a **Qt error dialog** (full traceback). If the process dies too fast, **open the app again** to see the previous error in the same dialog.
 
-- `aviz_last_crash.txt` and `aviz_boot.txt` in app private storage
-- **`Download/aviz_last_crash.txt`** on the phone (open the Files app → Downloads)
-
-If the app closes instantly, **open it again** — the previous crash (or boot log) is shown on launch.
+Log files (when the OS allows writing them): `aviz_last_crash.txt`, `aviz_boot.txt`, or `aviz_early.txt` under `/storage/emulated/0/Download` or app private storage. On Android 11+, Download writes may be blocked; rely on the on-screen Qt dialog instead.
 
 ## Windows-only note
 
