@@ -207,22 +207,51 @@ def report_fatal(exc: BaseException | None = None, *, title: str = "AViz crashed
     show_crash_ui(title, detail, paths)
 
 
-def show_pending_crash() -> bool:
+def read_pending_message() -> tuple[str, str] | None:
+    """Return (title, body) for a crash/boot log from the previous run, if any."""
     crash = _read_file(_CRASH_NAME)
     if crash:
-        _clear_files()
-        show_crash_ui("AViz — previous crash", crash)
-        return True
+        return ("AViz — previous crash", crash)
     boot = _read_file(_BOOT_NAME)
+    early = _read_file("aviz_early.txt")
+    parts: list[str] = []
     if boot and boot.strip():
-        _clear_files()
-        show_crash_ui(
-            "AViz — last run stopped early",
-            boot.strip()
-            + "\n\n(No Python traceback — likely native/Qt crash during startup.)",
-        )
+        parts.append(boot.strip())
+    if early and early.strip():
+        parts.append("--- aviz_early.txt ---\n" + early.strip())
+    if parts:
+        body = "\n\n".join(parts)
+        body += "\n\n(No Python traceback — crash likely before Qt UI or during native code.)"
+        return ("AViz — last run stopped early", body)
+    return None
+
+
+def show_pending_qt() -> bool:
+    """Show last crash using Qt (call after QApplication exists)."""
+    pending = read_pending_message()
+    if not pending:
+        return False
+    title, body = pending
+    _clear_files()
+    try:
+        from PySide6.QtWidgets import QMessageBox
+
+        QMessageBox.critical(None, title, body[:12000])
         return True
-    return False
+    except Exception as exc:
+        log_android(f"show_pending_qt: {exc}")
+        show_crash_ui(title, body)
+        return True
+
+
+def show_pending_crash() -> bool:
+    pending = read_pending_message()
+    if not pending:
+        return False
+    title, body = pending
+    _clear_files()
+    show_crash_ui(title, body)
+    return True
 
 
 def install_excepthook() -> None:
