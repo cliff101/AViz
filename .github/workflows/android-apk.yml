@@ -73,7 +73,7 @@ jobs:
           test -n "${NDK}" && test -d "${NDK}"
           echo "ANDROID_SDK=${CACHE}/android-sdk" >> "${GITHUB_ENV}"
           echo "ANDROID_NDK=${NDK}" >> "${GITHUB_ENV}"
-          ls -la "${CACHE}" "${ANDROID_SDK}" "${ANDROID_NDK}"
+          ls -la "${CACHE}" "${CACHE}/android-sdk" "${NDK}"
 
       - name: Deploy and build APK
         run: |
