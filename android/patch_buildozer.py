@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Append Android permissions and requirements to buildozer.spec after deploy init."""
+"""Patch buildozer.spec after pyside6-android-deploy generates it."""
 
 from __future__ import annotations
 
@@ -10,32 +10,52 @@ PERMS = (
     "android.permissions = RECORD_AUDIO,READ_MEDIA_AUDIO,"
     "READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE"
 )
-REQUIREMENTS_EXTRA = "python3,numpy,scipy,pyqtgraph,android"
+REQUIREMENTS_EXTRA = "numpy,scipy,pyqtgraph,android"
+EXCLUDE_DIRS = "tests,scripts,.github,.buildozer,deployment,wheels,.venv,.git"
+LOG_LEVEL = "log_level = 2"
+
+
+def _upsert(lines: list[str], key: str, value: str, section: str | None = None) -> None:
+    prefix = f"{key} ="
+    for i, line in enumerate(lines):
+        if line.strip().startswith(prefix):
+            lines[i] = f"{key} = {value}"
+            return
+    if section:
+        for i, line in enumerate(lines):
+            if line.strip() == f"[{section}]":
+                lines.insert(i + 1, f"{key} = {value}")
+                return
+    lines.append(f"{key} = {value}")
 
 
 def patch(spec_path: Path) -> None:
-    text = spec_path.read_text(encoding="utf-8")
-    if PERMS.split("=")[0].strip() in text:
-        return
-    lines = text.splitlines()
-    out: list[str] = []
-    inserted_perm = False
-    for line in lines:
-        out.append(line)
-        if line.strip().startswith("requirements =") and REQUIREMENTS_EXTRA not in line:
+    lines = spec_path.read_text(encoding="utf-8").splitlines()
+
+    if not any("android.permissions = RECORD_AUDIO" in ln for ln in lines):
+        for i, line in enumerate(lines):
+            if line.strip().startswith("title ="):
+                lines.insert(i + 1, PERMS)
+                break
+
+    for i, line in enumerate(lines):
+        if line.strip().startswith("requirements ="):
             base = line.split("=", 1)[1].strip()
-            out[-1] = f"requirements = {base},{REQUIREMENTS_EXTRA}"
-        if line.strip().startswith("p4a.branch ="):
-            out[-1] = "p4a.branch = develop"
-        if line.strip() == "[app]" and not inserted_perm:
-            continue
-        if line.strip().startswith("title =") and not inserted_perm:
-            out.append(PERMS)
-            inserted_perm = True
-    if not inserted_perm:
-        out.append("")
-        out.append(PERMS)
-    spec_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+            parts = [p.strip() for p in base.split(",") if p.strip()]
+            for req in REQUIREMENTS_EXTRA.split(","):
+                if req not in parts:
+                    parts.append(req)
+            lines[i] = f"requirements = {','.join(parts)}"
+            break
+
+    _upsert(lines, "p4a.branch", "develop", section="app")
+    _upsert(lines, "source.exclude_dirs", EXCLUDE_DIRS, section="app")
+    _upsert(lines, "log_level", "2", section="buildozer")
+
+    text = "\n".join(lines) + "\n"
+    if "android.permissions = RECORD_AUDIO" not in text:
+        text = PERMS + "\n" + text
+    spec_path.write_text(text, encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ on:
       - "main.py"
       - "pysidedeploy.spec"
       - ".github/workflows/android-apk.yml"
+      - "android/**"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -53,7 +54,6 @@ jobs:
           ANDROID_REQ="$(python -c "import PySide6, os; print(os.path.join(os.path.dirname(PySide6.__file__), 'scripts', 'requirements-android.txt'))")"
           pip install -r "${ANDROID_REQ}"
           command -v pyside6-android-deploy
-          pyside6-android-deploy --help | head -20
 
       - name: Download Qt for Python Android wheels (aarch64)
         run: |
@@ -79,13 +79,13 @@ jobs:
           test -n "${NDK}" && test -d "${NDK}"
           echo "ANDROID_SDK=${CACHE}/android-sdk" >> "${GITHUB_ENV}"
           echo "ANDROID_NDK=${NDK}" >> "${GITHUB_ENV}"
-          ls -la "${CACHE}" "${CACHE}/android-sdk" "${NDK}"
 
-      - name: Deploy and build APK
+      - name: Generate deployment files
         run: |
           set -euxo pipefail
           java -version
           echo "JAVA_HOME=${JAVA_HOME}"
+          # Creates buildozer.spec + deployment/; may attempt a build (errors logged).
           pyside6-android-deploy \
             --config-file pysidedeploy.spec \
             --name aviz \
@@ -95,23 +95,31 @@ jobs:
             --sdk-path "${ANDROID_SDK}" \
             --force \
             --keep-deployment-files \
-            -v 2>&1 | tee deploy.log
+            -v 2>&1 | tee deploy.log || true
           test -f buildozer.spec
           python android/patch_buildozer.py buildozer.spec
-          bash android/prepare_p4a_build.sh
-          buildozer android clean || true
-          buildozer android debug -v 2>&1 | tee buildozer.log
+
+      - name: Build APK
+        run: |
+          set -euxo pipefail
+          APK="$(bash android/find_apk.sh || true)"
+          if [ -n "${APK}" ] && [ -f "${APK}" ]; then
+            echo "APK already present after deploy: ${APK}"
+          else
+            bash android/prepare_p4a_build.sh
+            buildozer android debug 2>&1 | tee buildozer.log
+          fi
+          APK="$(bash android/find_apk.sh)"
+          test -n "${APK}" && test -f "${APK}"
+          echo "APK_PATH=${APK}" >> "${GITHUB_ENV}"
+          ls -la "${APK}"
 
       - name: Collect APK
         run: |
           set -euxo pipefail
-          APK=$(find . -name "*.apk" -path "*bin*" 2>/dev/null | head -1)
-          if [ -z "$APK" ]; then
-            echo "APK not found."
-            exit 1
-          fi
+          test -f "${APK_PATH}"
           mkdir -p dist
-          cp "$APK" dist/AViz-debug.apk
+          cp "${APK_PATH}" dist/AViz-debug.apk
           ls -la dist/
 
       - uses: actions/upload-artifact@v4
