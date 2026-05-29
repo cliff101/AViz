@@ -1,0 +1,7 @@
+numpy>=1.26
+scipy>=1.12
+soundfile>=0.12
+sounddevice>=0.5
+PySide6>=6.6
+pyqtgraph>=0.13
+PyAudioWPatch>=0.2.12.6
