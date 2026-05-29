@@ -9,10 +9,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-import soundfile as sf
 from numpy.typing import NDArray
 
 from aviz.config import AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
+from aviz.runtime import is_android
 
 
 @dataclass
@@ -36,6 +36,9 @@ def load_audio_file(path: Path) -> AudioData:
         return _load_via_ffmpeg(path)
     if suffix not in AUDIO_EXTENSIONS and suffix:
         pass
+    # Android APK does not bundle soundfile (no p4a recipe); stdlib WAV still works.
+    if is_android() and suffix == ".wav":
+        return _load_wav_stdlib(path)
     try:
         return _load_soundfile(path)
     except Exception:
@@ -73,7 +76,18 @@ def _load_wav_stdlib(path: Path) -> AudioData:
     )
 
 
+def _import_soundfile():
+    try:
+        import soundfile as sf
+    except ImportError as exc:
+        raise RuntimeError(
+            "soundfile is not available. On Android, use WAV files or rebuild with soundfile."
+        ) from exc
+    return sf
+
+
 def _load_soundfile(path: Path) -> AudioData:
+    sf = _import_soundfile()
     data, sr = sf.read(str(path), always_2d=True, dtype="float64")
     channels = data.shape[1]
     samples = data

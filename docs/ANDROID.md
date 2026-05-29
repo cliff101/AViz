@@ -68,6 +68,19 @@ Push to GitHub and run **Actions → Android APK → Run workflow**, or push to 
 
 Enable “Install unknown apps” for your file manager, copy `AViz-debug.apk` to the phone, and install. Grant **microphone** and **storage/media** permissions when prompted.
 
+## App closes immediately on launch
+
+The most common cause was a **missing `soundfile` module** at import time: `PlayerTab` loads `aviz.audio.decoder`, which used to `import soundfile` at module level even though the APK does not bundle it. Rebuild from a commit that lazy-imports `soundfile` (WAV analysis still works via the stdlib).
+
+To capture the real error on a device with USB debugging:
+
+```bash
+adb logcat -c
+adb logcat | grep -iE 'python|aviz|traceback|ModuleNotFound'
+```
+
+Then open the app and read the Python traceback in logcat.
+
 ## Windows-only note
 
 `pyside6-android-deploy` does **not** run on Windows. Use WSL2 Ubuntu, a Linux VM, or the GitHub workflow above.
