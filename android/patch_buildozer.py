@@ -10,7 +10,8 @@ PERMS = (
     "android.permissions = RECORD_AUDIO,READ_MEDIA_AUDIO,"
     "READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE"
 )
-REQUIREMENTS_EXTRA = "numpy,scipy,pyqtgraph,android"
+# scipy omitted — often crashes native code on Android; numpy fallbacks in _scipy_compat.py
+REQUIREMENTS_EXTRA = "numpy,pyqtgraph,android"
 EXCLUDE_DIRS = "tests,scripts,.github,.buildozer,deployment,wheels,.venv,.git"
 LOG_LEVEL = "log_level = 2"
 
@@ -42,6 +43,7 @@ def patch(spec_path: Path) -> None:
         if line.strip().startswith("requirements ="):
             base = line.split("=", 1)[1].strip()
             parts = [p.strip() for p in base.split(",") if p.strip()]
+            parts = [p for p in parts if p.lower() != "scipy"]
             for req in REQUIREMENTS_EXTRA.split(","):
                 if req not in parts:
                     parts.append(req)

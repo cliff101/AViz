@@ -17,3 +17,6 @@ buildozer.spec
 deploy.log
 buildozer.log
 wheels/
+aviz_early.txt
+aviz_boot.txt
+aviz_last_crash.txt

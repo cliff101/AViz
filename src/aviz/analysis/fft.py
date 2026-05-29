@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.fft import rfft, rfftfreq
-from scipy.signal import get_window
+
+from aviz.analysis._scipy_compat import get_window, rfft, rfftfreq
 
 
 def bin_frequencies(n_fft: int, sample_rate: float) -> NDArray[np.float64]:

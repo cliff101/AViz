@@ -35,6 +35,8 @@ def is_mobile_runtime() -> bool:
 
 
 def storage_roots() -> list[Path]:
+    if not is_mobile_runtime():
+        return []
     roots: list[Path] = []
     for key in (
         "ANDROID_PRIVATE",
@@ -45,14 +47,12 @@ def storage_roots() -> list[Path]:
         v = os.environ.get(key)
         if v:
             roots.append(Path(v))
-    roots.append(Path.cwd())
     try:
         roots.append(Path(__file__).resolve().parent)
     except Exception:
         pass
-    # User-visible path (needs storage permission in manifest)
-    roots.append(Path("/sdcard/Download"))
     roots.append(Path("/storage/emulated/0/Download"))
+    roots.append(Path("/sdcard/Download"))
     seen: set[str] = set()
     out: list[Path] = []
     for r in roots:
@@ -64,6 +64,8 @@ def storage_roots() -> list[Path]:
 
 
 def boot_log(line: str) -> None:
+    if not is_mobile_runtime():
+        return
     stamp = datetime.now(timezone.utc).strftime("%H:%M:%S")
     text = f"{stamp} {line}\n"
     for root in storage_roots():
@@ -279,7 +281,18 @@ def install_thread_hook() -> None:
     threading.excepthook = hook  # type: ignore[attr-defined]
 
 
+def clear_logs() -> None:
+    _clear_files()
+    for root in storage_roots():
+        try:
+            (root / "aviz_early.txt").unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
 def bootstrap() -> None:
+    if not is_mobile_runtime():
+        return
     install_excepthook()
     install_thread_hook()
     show_pending_crash()

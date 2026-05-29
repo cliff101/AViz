@@ -6,7 +6,8 @@ from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.signal import spectrogram as scipy_spectrogram
+
+from aviz.analysis._scipy_compat import spectrogram as scipy_spectrogram
 
 
 @dataclass
