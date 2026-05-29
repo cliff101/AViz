@@ -67,7 +67,13 @@ jobs:
           set -euxo pipefail
           python /tmp/pyside-setup/tools/cross_compile_android/main.py \
             --download-only --skip-update --auto-accept-license
-          ls -la "${HOME}/.pyside6_android_deploy" || ls -la "${HOME}/.pyside6-android-deploy"
+          CACHE="${HOME}/.pyside6_android_deploy"
+          test -d "${CACHE}/android-sdk"
+          NDK="$(find "${CACHE}/android-ndk" -maxdepth 1 -type d -name 'android-ndk-r*' | head -1)"
+          test -n "${NDK}" && test -d "${NDK}"
+          echo "ANDROID_SDK=${CACHE}/android-sdk" >> "${GITHUB_ENV}"
+          echo "ANDROID_NDK=${NDK}" >> "${GITHUB_ENV}"
+          ls -la "${CACHE}" "${ANDROID_SDK}" "${ANDROID_NDK}"
 
       - name: Deploy and build APK
         run: |
@@ -77,6 +83,8 @@ jobs:
             --name aviz \
             --wheel-pyside wheels/PySide6.whl \
             --wheel-shiboken wheels/shiboken6.whl \
+            --ndk-path "${ANDROID_NDK}" \
+            --sdk-path "${ANDROID_SDK}" \
             --force \
             --keep-deployment-files \
             -v 2>&1 | tee deploy.log

@@ -24,3 +24,6 @@ plugins = platforms,platforminputcontexts,xcbglintegrations,wayland-decoration-c
 
 mode = debug
 arch = aarch64
+# Set explicitly in CI/local builds (deploy skips cache lookup when this file exists):
+# ndk_path = /home/you/.pyside6_android_deploy/android-ndk/android-ndk-r27c
+# sdk_path = /home/you/.pyside6_android_deploy/android-sdk

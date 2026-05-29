@@ -47,9 +47,12 @@ python /tmp/pyside-setup/tools/cross_compile_android/main.py --download-only --s
 5. Deploy (from repo root; `main.py` must stay the entry point):
 
 ```bash
+NDK=~/.pyside6_android_deploy/android-ndk/android-ndk-r27c
+SDK=~/.pyside6_android_deploy/android-sdk
 pyside6-android-deploy --config-file pysidedeploy.spec --name aviz \
-  --wheel-pyside wheels/PySide6-*-android_aarch64.whl \
-  --wheel-shiboken wheels/shiboken6-*-android_aarch64.whl \
+  --wheel-pyside wheels/PySide6.whl \
+  --wheel-shiboken wheels/shiboken6.whl \
+  --ndk-path "$NDK" --sdk-path "$SDK" \
   --force --keep-deployment-files -v
 python android/patch_buildozer.py buildozer.spec
 buildozer android debug
