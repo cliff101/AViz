@@ -22,22 +22,24 @@ sudo apt-get update
 sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config \
   zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
 python3 -m venv .venv && source .venv/bin/activate
-pip install "PySide6==6.9.1" buildozer==1.5.0 "cython==0.29.33"
+pip install "PySide6==6.10.2" buildozer==1.5.0 "cython==0.29.33"
 ```
 
 3. Download Android wheels (match your PySide6 version):
 
 ```bash
 mkdir wheels
-pip download --no-deps -d wheels \
-  https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-6.9.1-6.9.1-cp311-cp311-android_aarch64.whl \
-  https://download.qt.io/official_releases/QtForPython/pyside6/shiboken6-6.9.1-6.9.1-cp311-cp311-android_aarch64.whl
+curl -fL -o wheels/PySide6.whl \
+  https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-6.10.2-6.10.2-cp311-cp311-android_aarch64.whl
+curl -fL -o wheels/shiboken6.whl \
+  https://download.qt.io/official_releases/QtForPython/pyside6/shiboken6-6.10.2-6.10.2-cp311-cp311-android_aarch64.whl
 ```
 
 4. Download NDK/SDK (once):
 
 ```bash
-git clone --depth 1 --branch 6.9 https://code.qt.io/pyside/pyside-setup.git /tmp/pyside-setup
+git clone --depth 1 --branch 6.10.2 https://code.qt.io/pyside/pyside-setup.git /tmp/pyside-setup
+pip install -r /tmp/pyside-setup/tools/cross_compile_android/requirements.txt
 python /tmp/pyside-setup/tools/cross_compile_android/main.py --download-only --skip-update --auto-accept-license
 ```
 

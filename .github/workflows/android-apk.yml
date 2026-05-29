@@ -1,5 +1,4 @@
 # Build AViz debug APK on Linux (required by pyside6-android-deploy).
-# Trigger manually or push to main. Download the APK from workflow artifacts.
 name: Android APK
 
 on:
@@ -12,9 +11,14 @@ on:
       - "pysidedeploy.spec"
       - ".github/workflows/android-apk.yml"
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  QT_VERSION: "6.10.2"
+  PYSIDE_BRANCH: "6.10.2"
+
 jobs:
   build-apk:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 180
 
     steps:
@@ -24,61 +28,82 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install host tools
+      - name: Install system dependencies
         run: |
+          set -euxo pipefail
           sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool \
-            pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
-            cmake libffi-dev libssl-dev
+          sudo apt-get install -y \
+            git curl zip unzip openjdk-17-jdk autoconf automake libtool \
+            pkg-config zlib1g-dev libffi-dev libssl-dev cmake libncurses-dev
+
+      - name: Clone pyside-setup and Python deploy tools
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 -b "${PYSIDE_BRANCH}" \
+            https://code.qt.io/pyside/pyside-setup.git /tmp/pyside-setup
           python -m pip install --upgrade pip
-          pip install "PySide6==6.9.1" buildozer==1.5.0 "cython==0.29.33"
+          pip install "PySide6==${QT_VERSION}" buildozer==1.5.0 "cython==0.29.33"
+          pip install -r /tmp/pyside-setup/tools/cross_compile_android/requirements.txt
+          command -v pyside6-android-deploy
+          pyside6-android-deploy --help | head -20
 
       - name: Download Qt for Python Android wheels (aarch64)
         run: |
+          set -euxo pipefail
           mkdir -p wheels
           BASE="https://download.qt.io/official_releases/QtForPython/pyside6"
-          VER="6.9.1"
-          pip download --no-deps -d wheels \
-            "${BASE}/PySide6-${VER}-${VER}-cp311-cp311-android_aarch64.whl" \
+          VER="${QT_VERSION}"
+          curl -fL -o "wheels/PySide6.whl" \
+            "${BASE}/PySide6-${VER}-${VER}-cp311-cp311-android_aarch64.whl"
+          curl -fL -o "wheels/shiboken6.whl" \
             "${BASE}/shiboken6-${VER}-${VER}-cp311-cp311-android_aarch64.whl"
+          ls -la wheels/
 
       - name: Download Android NDK and SDK
         run: |
-          git clone --depth 1 --branch 6.9 https://code.qt.io/pyside/pyside-setup.git /tmp/pyside-setup
+          set -euxo pipefail
           python /tmp/pyside-setup/tools/cross_compile_android/main.py \
             --download-only --skip-update --auto-accept-license
+          ls -la "${HOME}/.pyside6_android_deploy" || ls -la "${HOME}/.pyside6-android-deploy"
 
-      - name: Deploy Android package
+      - name: Deploy and build APK
         run: |
-          WHEEL_PYSIDE=$(ls wheels/PySide6-*-android_aarch64.whl | head -1)
-          WHEEL_SHIBOKEN=$(ls wheels/shiboken6-*-android_aarch64.whl | head -1)
+          set -euxo pipefail
           pyside6-android-deploy \
             --config-file pysidedeploy.spec \
             --name aviz \
-            --wheel-pyside "$WHEEL_PYSIDE" \
-            --wheel-shiboken "$WHEEL_SHIBOKEN" \
+            --wheel-pyside wheels/PySide6.whl \
+            --wheel-shiboken wheels/shiboken6.whl \
             --force \
             --keep-deployment-files \
-            -v 2>&1 | tee deploy.log || true
-          if [ -f buildozer.spec ]; then
-            python android/patch_buildozer.py buildozer.spec
-            buildozer android debug 2>&1 | tee buildozer.log
-          fi
+            -v 2>&1 | tee deploy.log
+          test -f buildozer.spec
+          python android/patch_buildozer.py buildozer.spec
+          buildozer android debug -v 2>&1 | tee buildozer.log
 
       - name: Collect APK
         run: |
+          set -euxo pipefail
           APK=$(find . -name "*.apk" -path "*bin*" 2>/dev/null | head -1)
           if [ -z "$APK" ]; then
-            echo "APK not found. deploy.log / buildozer.log:"
-            tail -n 80 deploy.log || true
-            tail -n 80 buildozer.log || true
+            echo "APK not found."
             exit 1
           fi
           mkdir -p dist
           cp "$APK" dist/AViz-debug.apk
-          echo "APK_PATH=dist/AViz-debug.apk" >> "$GITHUB_ENV"
+          ls -la dist/
 
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: aviz-android-apk
           path: dist/AViz-debug.apk
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: android-build-logs
+          path: |
+            deploy.log
+            buildozer.log
+          if-no-files-found: ignore
