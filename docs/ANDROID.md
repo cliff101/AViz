@@ -23,6 +23,7 @@ sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config
   zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
 python3 -m venv .venv && source .venv/bin/activate
 pip install "PySide6==6.10.2" buildozer==1.5.0 "cython==0.29.33"
+pip install -r "$(python -c "import PySide6, os; print(os.path.join(os.path.dirname(PySide6.__file__), 'scripts', 'requirements-android.txt'))")"
 ```
 
 3. Download Android wheels (match your PySide6 version):

@@ -44,6 +44,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install "PySide6==${QT_VERSION}" buildozer==1.5.0 "cython==0.29.33"
           pip install -r /tmp/pyside-setup/tools/cross_compile_android/requirements.txt
+          ANDROID_REQ="$(python -c "import PySide6, os; print(os.path.join(os.path.dirname(PySide6.__file__), 'scripts', 'requirements-android.txt'))")"
+          pip install -r "${ANDROID_REQ}"
           command -v pyside6-android-deploy
           pyside6-android-deploy --help | head -20
 
