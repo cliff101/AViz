@@ -308,18 +308,9 @@ def install_crash_handlers() -> None:
 
 
 def boot_main() -> None:
-    """Entry from main.py — handlers first, show last crash, then run app."""
+    """Legacy entry — main.py uses android_crash.bootstrap() at repo root."""
     install_crash_handlers()
-    boot_log("boot_main start")
     show_pending_crash()
-    boot_log("importing aviz.app")
-    try:
-        from aviz.app import run
+    from aviz.app import run
 
-        boot_log("calling run()")
-        run()
-    except SystemExit:
-        raise
-    except Exception as exc:
-        report_fatal(exc, title="AViz failed")
-        sys.exit(1)
+    run()
