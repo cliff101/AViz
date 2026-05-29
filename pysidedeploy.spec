@@ -18,7 +18,9 @@ plugins =
 
 [android]
 
-plugins = platforms,platforminputcontexts,xcbglintegrations,wayland-decoration-client,wayland-graphics-integration-client,wayland-shell-integration,egldeviceintegrations,generic,iconengines,imageformats,networkinformation,platforms/darwin,platforms/directfb,tls,styles,assetimporters,sceneparsers,renderers,renderplugins,geometryloaders,sceneparsers,canbus,playlistformats,multimedia
+# Leave empty — pyside6-android-deploy auto-detects Android plugins from Qt modules.
+# Names must be category_name (e.g. imageformats_qjpeg), not desktop folder names.
+plugins =
 
 [buildozer]
 
