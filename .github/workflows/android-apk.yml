@@ -12,6 +12,7 @@ on:
       - "pysidedeploy.spec"
       - ".github/workflows/android-apk.yml"
       - "android/**"
+      - "android_crash.py"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

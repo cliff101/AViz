@@ -2,6 +2,14 @@
 
 AViz can be packaged as an Android APK using **PySide6** and `pyside6-android-deploy`. The same UI (Home, Live, Player, spectrograms, Visual FX) runs on device with platform-specific audio backends.
 
+## 16 KB page size (Samsung / Android 15+)
+
+Many newer phones use **16 KB memory pages**. The PySide6 Qt libraries in the APK must use **16 KB ELF alignment**, or Android blocks the app. You may see a dialog: *「這個應用程式不支援 16 KB」* / *ELF alignment check failed*.
+
+**New APKs** include `android:pageSizeCompat="enabled"` in the manifest (via `android/extra_manifest_application_arguments.xml`).
+
+**Without rebuilding**, on the phone: **Settings → Apps → AViz → Advanced** → enable **Run app with page size compat mode** (wording may vary), then open AViz again.
+
 ## Important limitations
 
 | Feature | Windows desktop | Android |

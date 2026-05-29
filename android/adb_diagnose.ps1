@@ -22,7 +22,8 @@ function Test-AdbDevice {
 }
 
 Test-AdbDevice
-Write-Host "Device OK: $($Adb devices | Select-String 'device$')"
+$deviceLine = (& $Adb devices 2>&1 | Select-String 'device$' | Select-Object -First 1).Line.Trim()
+Write-Host "Device OK: $deviceLine"
 
 if ($Apk) {
     if (-not (Test-Path $Apk)) { Write-Error "APK not found: $Apk" }
@@ -32,14 +33,19 @@ if ($Apk) {
 
 Write-Host ""
 Write-Host "Looking for AViz package ..."
-$pkg = & $Adb shell pm list packages -3 2>$null |
-    ForEach-Object { $_ -replace "^package:", "" } |
-    Where-Object { $_ -match "aviz" }
+$prevEap = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+$pkg = @(
+    & $Adb shell pm list packages 2>&1 |
+        Where-Object { $_ -is [string] -and $_ -match "^package:(.+)$" } |
+        ForEach-Object { if ($_ -match "^package:(.+)$") { $Matches[1] } } |
+        Where-Object { $_ -match "aviz" }
+)
+$ErrorActionPreference = $prevEap
 
 if (-not $pkg) {
-    # buildozer default for title=AViz
     foreach ($guess in @("org.aviz.aviz", "org.kivy.aviz", "org.aviz")) {
-        $p = & $Adb shell pm path $guess 2>&1
+        $p = & $Adb shell pm path $guess 2>&1 | Out-String
         if ($p -match "package:") { $pkg = @($guess); break }
     }
 }
@@ -60,7 +66,10 @@ Write-Host ""
 Write-Host "Clearing logcat. Launching AViz on the phone in 3s ..."
 & $Adb logcat -c
 Start-Sleep -Seconds 1
-& $Adb shell monkey -p $pkg -c android.intent.category.LAUNCHER 1 2>$null | Out-Null
+$prevEap = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+& $Adb shell monkey -p $pkg -c android.intent.category.LAUNCHER 1 2>&1 | Out-Null
+$ErrorActionPreference = $prevEap
 Start-Sleep -Seconds 6
 
 Write-Host "Saving logcat -> $LogOut"

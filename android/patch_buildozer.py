@@ -14,6 +14,11 @@ PERMS = (
 REQUIREMENTS_EXTRA = "numpy,android"
 EXCLUDE_DIRS = "tests,scripts,.github,.buildozer,deployment,wheels,.venv,.git"
 LOG_LEVEL = "log_level = 2"
+# Samsung / Android 15+ devices with 16 KB pages: Qt .so from PySide6 wheels need compat mode
+MANIFEST_APP_ARGS = (
+    "android.extra_manifest_application_arguments = "
+    "android/extra_manifest_application_arguments.xml"
+)
 
 
 def _upsert(lines: list[str], key: str, value: str, section: str | None = None) -> None:
@@ -57,6 +62,8 @@ def patch(spec_path: Path) -> None:
     _upsert(lines, "p4a.branch", "develop", section="app")
     _upsert(lines, "source.exclude_dirs", EXCLUDE_DIRS, section="app")
     _upsert(lines, "log_level", "2", section="buildozer")
+    if "extra_manifest_application_arguments" not in "\n".join(lines):
+        lines.append(MANIFEST_APP_ARGS)
 
     text = "\n".join(lines) + "\n"
     if "android.permissions = RECORD_AUDIO" not in text:
