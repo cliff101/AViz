@@ -25,6 +25,8 @@ def patch(spec_path: Path) -> None:
         if line.strip().startswith("requirements =") and REQUIREMENTS_EXTRA not in line:
             base = line.split("=", 1)[1].strip()
             out[-1] = f"requirements = {base},{REQUIREMENTS_EXTRA}"
+        if line.strip().startswith("p4a.branch ="):
+            out[-1] = "p4a.branch = develop"
         if line.strip() == "[app]" and not inserted_perm:
             continue
         if line.strip().startswith("title =") and not inserted_perm:
