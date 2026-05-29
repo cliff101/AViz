@@ -8,6 +8,7 @@ on:
     paths:
       - "src/**"
       - "main.py"
+      - "android_crash.py"
       - "pysidedeploy.spec"
       - ".github/workflows/android-apk.yml"
       - "android/**"

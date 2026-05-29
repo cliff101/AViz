@@ -48,33 +48,16 @@ def _run_android() -> None:
         if ac.show_pending_qt():
             sys.exit(app.exec())
 
-    steps = [
-        ("numpy", lambda: __import__("numpy")),
-        ("pyqtgraph", lambda: __import__("pyqtgraph")),
-        ("aviz.ui.main_window", lambda: __import__("aviz.ui.main_window")),
-    ]
-
-    for name, fn in steps:
-        if ac:
-            ac.boot_log(f"run: import {name}")
-        try:
-            fn()
-        except Exception:
-            detail = traceback.format_exc()
-            if ac:
-                ac.write_crash(detail)
-            _show_fatal(app, f"AViz import failed: {name}", detail)
-            return
-
-    import pyqtgraph as pg
-
-    pg.setConfigOptions(antialias=False, useOpenGL=False, foreground="d")
-
-    if ac:
-        ac.boot_log("run: create MainWindow")
     try:
+        if ac:
+            ac.boot_log("run: import numpy")
+        __import__("numpy")
+        if ac:
+            ac.boot_log("run: import aviz.ui.main_window")
         from aviz.ui.main_window import MainWindow
 
+        if ac:
+            ac.boot_log("run: create MainWindow")
         win = MainWindow()
     except Exception:
         detail = traceback.format_exc()

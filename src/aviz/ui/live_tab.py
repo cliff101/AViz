@@ -32,9 +32,8 @@ from aviz.audio.capture import (
     probe_loopback_devices,
 )
 from aviz.ui.theme import ACCENT, DANGER, TEXT_MUTED
-from aviz.ui.widgets.spectrum_plot import SpectrumPlotWidget
+from aviz.ui.widgets import SpectrumPlotWidget, WaterfallPlotWidget
 from aviz.ui.widgets.visual_fx_panel import VisualFxPanel
-from aviz.ui.widgets.waterfall_plot import WaterfallPlotWidget
 from aviz.visual_settings import VisualSettings, apply_preset
 from aviz.runtime import is_android
 from aviz.workspace.manager import WorkspaceManager

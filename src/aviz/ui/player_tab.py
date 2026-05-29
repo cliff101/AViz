@@ -31,8 +31,7 @@ from aviz.analysis.spectrogram import SpectrogramResult, compute_spectrogram
 from aviz.audio.decoder import load_audio_file
 from aviz.audio.player import AudioPlayer
 from aviz.ui.list_reorder import enable_internal_drag_reorder, file_ids_from_list
-from aviz.ui.widgets.spectrogram_plot import SpectrogramPlotWidget
-from aviz.ui.widgets.spectrum_plot import SpectrumPlotWidget
+from aviz.ui.widgets import SpectrogramPlotWidget, SpectrumPlotWidget
 from aviz.ui.widgets.visual_fx_panel import VisualFxPanel
 from aviz.visual_settings import VisualSettings
 from aviz.workspace.manager import WorkspaceManager

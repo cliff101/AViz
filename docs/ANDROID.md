@@ -8,6 +8,7 @@ AViz can be packaged as an Android APK using **PySide6** and `pyside6-android-de
 |--------|------------------|---------|
 | Live — system / speaker loopback | WASAPI loopback (PyAudioWPatch) | **Microphone** input (Android does not expose full system loopback to apps) |
 | Player — file formats | All formats via soundfile + ffmpeg for video | soundfile when bundled; WAV fallback via stdlib; **no ffmpeg** in APK unless you add it |
+| Spectrum / spectrogram charts | pyqtgraph | **Disabled** in APK (pyqtgraph crashes natively); UI placeholders only |
 | Build host | Windows OK | **Linux only** (WSL, VM, or GitHub Actions) |
 
 “Full function” here means all tabs, charts, workspaces, playlists, and file analysis — not identical Windows loopback behavior.
@@ -72,9 +73,9 @@ Enable “Install unknown apps” for your file manager, copy `AViz-debug.apk` t
 
 The most common cause was a **missing `soundfile` module** at import time: `PlayerTab` loads `aviz.audio.decoder`, which used to `import soundfile` at module level even though the APK does not bundle it. Rebuild from a commit that lazy-imports `soundfile` (WAV analysis still works via the stdlib).
 
-On crash, AViz should show a **Qt error dialog** (full traceback). If the process dies too fast, **open the app again** to see the previous error in the same dialog.
+On launch you should see a short **toast**: “AViz: Python started”. If the app still closes instantly with **no toast**, Python is not starting (native/Qt packaging issue — not fixable from Python alone).
 
-Log files (when the OS allows writing them): `aviz_last_crash.txt`, `aviz_boot.txt`, or `aviz_early.txt` under `/storage/emulated/0/Download` or app private storage. On Android 11+, Download writes may be blocked; rely on the on-screen Qt dialog instead.
+If Python runs but something fails, a **Qt error dialog** appears, or **open the app again** for “previous crash”.
 
 ## Windows-only note
 
