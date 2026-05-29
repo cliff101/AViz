@@ -12,13 +12,29 @@ PERMS = (
 )
 # No scipy/pyqtgraph on Android (native SIGSEGV); charts use plot_stub_android.py
 REQUIREMENTS_EXTRA = "numpy,android"
+# Must match cp311 PySide6/shiboken Android wheels (libpython3.11.so)
+PYTHON_VERSION = "3.11.9"
+PYTHON_REQUIREMENTS = (
+    f"hostpython3=={PYTHON_VERSION}",
+    f"python3=={PYTHON_VERSION}",
+)
 EXCLUDE_DIRS = "tests,scripts,.github,.buildozer,deployment,wheels,.venv,.git"
 LOG_LEVEL = "log_level = 2"
+P4A_HOOK = "p4a.hook = android/p4a_hook.py"
 # Samsung / Android 15+ devices with 16 KB pages: Qt .so from PySide6 wheels need compat mode
 MANIFEST_APP_ARGS = (
     "android.extra_manifest_application_arguments = "
     "android/extra_manifest_application_arguments.xml"
 )
+
+
+def _pin_python311(parts: list[str]) -> list[str]:
+    parts = [
+        p
+        for p in parts
+        if not p.lower().startswith(("python3", "hostpython3"))
+    ]
+    return list(PYTHON_REQUIREMENTS) + parts
 
 
 def _upsert(lines: list[str], key: str, value: str, section: str | None = None) -> None:
@@ -53,6 +69,7 @@ def patch(spec_path: Path) -> None:
                 for p in parts
                 if p.lower() not in ("scipy", "pyqtgraph", "matplotlib")
             ]
+            parts = _pin_python311(parts)
             for req in REQUIREMENTS_EXTRA.split(","):
                 if req not in parts:
                     parts.append(req)
@@ -62,6 +79,8 @@ def patch(spec_path: Path) -> None:
     _upsert(lines, "p4a.branch", "develop", section="app")
     _upsert(lines, "source.exclude_dirs", EXCLUDE_DIRS, section="app")
     _upsert(lines, "log_level", "2", section="buildozer")
+    if "p4a.hook" not in "\n".join(lines):
+        lines.append(P4A_HOOK)
     if "extra_manifest_application_arguments" not in "\n".join(lines):
         lines.append(MANIFEST_APP_ARGS)
 

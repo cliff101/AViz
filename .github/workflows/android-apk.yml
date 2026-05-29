@@ -104,15 +104,13 @@ jobs:
       - name: Build APK
         run: |
           set -euxo pipefail
-          APK="$(bash android/find_apk.sh || true)"
-          if [ -n "${APK}" ] && [ -f "${APK}" ]; then
-            echo "APK already present after deploy: ${APK}"
-          else
-            bash android/prepare_p4a_build.sh
-            buildozer android debug 2>&1 | tee buildozer.log
-          fi
+          # Always rebuild after patch_buildozer.py (deploy may have built an APK with
+          # Python 3.14 and without pageSizeCompat before the spec was patched).
+          bash android/prepare_p4a_build.sh
+          buildozer android debug 2>&1 | tee buildozer.log
           APK="$(bash android/find_apk.sh)"
           test -n "${APK}" && test -f "${APK}"
+          python android/verify_apk.py "${APK}"
           echo "APK_PATH=${APK}" >> "${GITHUB_ENV}"
           ls -la "${APK}"
 

@@ -6,9 +6,9 @@ AViz can be packaged as an Android APK using **PySide6** and `pyside6-android-de
 
 Many newer phones use **16 KB memory pages**. The PySide6 Qt libraries in the APK must use **16 KB ELF alignment**, or Android blocks the app. You may see a dialog: *「這個應用程式不支援 16 KB」* / *ELF alignment check failed*.
 
-**New APKs** include `android:pageSizeCompat="enabled"` in the manifest (via `android/extra_manifest_application_arguments.xml`).
+**New APKs** (built after the CI fix) include `android:pageSizeCompat="enabled"` in the manifest and bundle **`libpython3.11.so`** to match the cp311 PySide6 wheels. An APK built only by `pyside6-android-deploy` (before `patch_buildozer.py` + `buildozer android debug`) can still show this dialog and crash with `libpython3.11.so not found`.
 
-**Without rebuilding**, on the phone: **Settings → Apps → AViz → Advanced** → enable **Run app with page size compat mode** (wording may vary), then open AViz again.
+**Without rebuilding**, on the phone: **Settings → Apps → AViz → Advanced** → enable **Run app with page size compat mode** (wording may vary), then open AViz again. That bypasses the dialog but does **not** fix a missing `libpython3.11.so`; you still need a rebuilt APK.
 
 ## Important limitations
 
@@ -78,6 +78,8 @@ Push to GitHub and run **Actions → Android APK → Run workflow**, or push to 
 Enable “Install unknown apps” for your file manager, copy `AViz-debug.apk` to the phone, and install. Grant **microphone** and **storage/media** permissions when prompted.
 
 ## App closes immediately on launch
+
+**`libpython3.11.so not found`** (in `adb logcat`): the APK was built with **Python 3.14** while PySide6 Android wheels are **cp311**. Rebuild from current `main` so `patch_buildozer.py` pins `python3==3.11.9` and CI runs `buildozer android debug` after patching.
 
 The most common cause was a **missing `soundfile` module** at import time: `PlayerTab` loads `aviz.audio.decoder`, which used to `import soundfile` at module level even though the APK does not bundle it. Rebuild from a commit that lazy-imports `soundfile` (WAV analysis still works via the stdlib).
 
