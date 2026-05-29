@@ -7,7 +7,20 @@ import sys
 
 
 def is_android() -> bool:
-    return sys.platform == "android" or bool(os.environ.get("ANDROID_ARGUMENT"))
+    """True when running inside the packaged Android app (p4a / PySide deploy)."""
+    if sys.platform == "android":
+        return True
+    if hasattr(sys, "getandroidapilevel"):
+        return True
+    if os.environ.get("ANDROID_ARGUMENT") or os.environ.get("ANDROID_PRIVATE"):
+        return True
+    try:
+        from jnius import autoclass  # type: ignore[import-untyped]
+
+        autoclass("org.kivy.android.PythonActivity")
+        return True
+    except Exception:
+        return False
 
 
 def is_windows() -> bool:

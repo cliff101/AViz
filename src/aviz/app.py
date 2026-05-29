@@ -21,6 +21,6 @@ def run() -> None:
         win = MainWindow()
     except Exception as exc:
         report_fatal(exc, title="AViz failed to start")
-        raise
+        sys.exit(1)
     win.show()
     sys.exit(app.exec())
