@@ -33,7 +33,7 @@ mkdir wheels
 curl -fL -o wheels/PySide6.whl \
   https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-6.10.2-6.10.2-cp311-cp311-android_aarch64.whl
 curl -fL -o wheels/shiboken6.whl \
-  https://download.qt.io/official_releases/QtForPython/pyside6/shiboken6-6.10.2-6.10.2-cp311-cp311-android_aarch64.whl
+  https://download.qt.io/official_releases/QtForPython/shiboken6/shiboken6-6.10.2-6.10.2-cp311-cp311-android_aarch64.whl
 ```
 
 4. Download NDK/SDK (once):

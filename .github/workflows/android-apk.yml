@@ -53,12 +53,13 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p wheels
-          BASE="https://download.qt.io/official_releases/QtForPython/pyside6"
           VER="${QT_VERSION}"
+          PYSIDE_BASE="https://download.qt.io/official_releases/QtForPython/pyside6"
+          SHIBOKEN_BASE="https://download.qt.io/official_releases/QtForPython/shiboken6"
           curl -fL -o "wheels/PySide6.whl" \
-            "${BASE}/PySide6-${VER}-${VER}-cp311-cp311-android_aarch64.whl"
+            "${PYSIDE_BASE}/PySide6-${VER}-${VER}-cp311-cp311-android_aarch64.whl"
           curl -fL -o "wheels/shiboken6.whl" \
-            "${BASE}/shiboken6-${VER}-${VER}-cp311-cp311-android_aarch64.whl"
+            "${SHIBOKEN_BASE}/shiboken6-${VER}-${VER}-cp311-cp311-android_aarch64.whl"
           ls -la wheels/
 
       - name: Download Android NDK and SDK
