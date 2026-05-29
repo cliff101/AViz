@@ -67,6 +67,8 @@ python android/patch_buildozer.py buildozer.spec
 buildozer android debug
 ```
 
+`patch_buildozer.py` sets `android.minapi = 24` (required by the p4a **numpy** recipe; deploy defaults to 21).
+
 The APK appears under `.buildozer/.../bin/`.
 
 ## Build without local Linux (GitHub Actions)

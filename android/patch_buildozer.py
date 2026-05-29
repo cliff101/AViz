@@ -21,6 +21,8 @@ REQUIRED_PERMISSIONS = (
     "WRITE_EXTERNAL_STORAGE",
 )
 EXCLUDE_DIRS = "tests,scripts,.github,.buildozer,deployment,wheels,.venv,.git"
+# p4a numpy recipe requires ndk-api >= 24 (buildozer: android.minapi)
+NDK_MIN_API = "24"
 P4A_HOOK = "android/p4a_hook.py"
 MANIFEST_APP_ARGS_FILE = "android/extra_manifest_application_arguments.xml"
 
@@ -112,6 +114,7 @@ def patch(spec_path: Path) -> None:
             break
 
     _upsert(lines, "p4a.branch", "develop", section="app")
+    _upsert(lines, "android.minapi", NDK_MIN_API, section="app")
     _upsert(lines, "source.exclude_dirs", EXCLUDE_DIRS, section="app")
     _upsert(lines, "log_level", "2", section="buildozer")
     _upsert(lines, "p4a.hook", P4A_HOOK, section="app")
