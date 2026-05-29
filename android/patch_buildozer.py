@@ -6,10 +6,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-PERMS = (
-    "android.permissions = RECORD_AUDIO,READ_MEDIA_AUDIO,"
-    "READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE"
-)
 # No scipy/pyqtgraph on Android (native SIGSEGV); charts use plot_stub_android.py
 REQUIREMENTS_EXTRA = "numpy,android"
 # Must match cp311 PySide6/shiboken Android wheels (libpython3.11.so)
@@ -18,14 +14,15 @@ PYTHON_REQUIREMENTS = (
     f"hostpython3=={PYTHON_VERSION}",
     f"python3=={PYTHON_VERSION}",
 )
-EXCLUDE_DIRS = "tests,scripts,.github,.buildozer,deployment,wheels,.venv,.git"
-LOG_LEVEL = "log_level = 2"
-P4A_HOOK = "p4a.hook = android/p4a_hook.py"
-# Samsung / Android 15+ devices with 16 KB pages: Qt .so from PySide6 wheels need compat mode
-MANIFEST_APP_ARGS = (
-    "android.extra_manifest_application_arguments = "
-    "android/extra_manifest_application_arguments.xml"
+REQUIRED_PERMISSIONS = (
+    "RECORD_AUDIO",
+    "READ_MEDIA_AUDIO",
+    "READ_EXTERNAL_STORAGE",
+    "WRITE_EXTERNAL_STORAGE",
 )
+EXCLUDE_DIRS = "tests,scripts,.github,.buildozer,deployment,wheels,.venv,.git"
+P4A_HOOK = "android/p4a_hook.py"
+MANIFEST_APP_ARGS_FILE = "android/extra_manifest_application_arguments.xml"
 
 
 def _pin_python311(parts: list[str]) -> list[str]:
@@ -51,14 +48,52 @@ def _upsert(lines: list[str], key: str, value: str, section: str | None = None) 
     lines.append(f"{key} = {value}")
 
 
+def _dedupe_option(lines: list[str], key: str) -> None:
+    """Keep the first `key =` line and drop later duplicates (invalid in ConfigParser)."""
+    prefix = f"{key} ="
+    seen = False
+    out: list[str] = []
+    for line in lines:
+        if line.strip().startswith(prefix):
+            if seen:
+                continue
+            seen = True
+        out.append(line)
+    lines[:] = out
+
+
+def _ensure_permissions(lines: list[str]) -> None:
+    _dedupe_option(lines, "android.permissions")
+    found: list[str] = []
+    idx: int | None = None
+    for i, line in enumerate(lines):
+        if line.strip().startswith("android.permissions ="):
+            idx = i
+            _, _, rhs = line.partition("=")
+            found = [p.strip() for p in rhs.split(",") if p.strip()]
+            break
+    merged: list[str] = []
+    for perm in REQUIRED_PERMISSIONS:
+        if perm not in merged:
+            merged.append(perm)
+    for perm in found:
+        if perm not in merged:
+            merged.append(perm)
+    row = f"android.permissions = {','.join(merged)}"
+    if idx is not None:
+        lines[idx] = row
+        return
+    for i, line in enumerate(lines):
+        if line.strip().startswith("title ="):
+            lines.insert(i + 1, row)
+            return
+    _upsert(lines, "android.permissions", ",".join(merged), section="app")
+
+
 def patch(spec_path: Path) -> None:
     lines = spec_path.read_text(encoding="utf-8").splitlines()
 
-    if not any("android.permissions = RECORD_AUDIO" in ln for ln in lines):
-        for i, line in enumerate(lines):
-            if line.strip().startswith("title ="):
-                lines.insert(i + 1, PERMS)
-                break
+    _ensure_permissions(lines)
 
     for i, line in enumerate(lines):
         if line.strip().startswith("requirements ="):
@@ -79,15 +114,19 @@ def patch(spec_path: Path) -> None:
     _upsert(lines, "p4a.branch", "develop", section="app")
     _upsert(lines, "source.exclude_dirs", EXCLUDE_DIRS, section="app")
     _upsert(lines, "log_level", "2", section="buildozer")
-    if "p4a.hook" not in "\n".join(lines):
-        lines.append(P4A_HOOK)
-    if "extra_manifest_application_arguments" not in "\n".join(lines):
-        lines.append(MANIFEST_APP_ARGS)
+    _upsert(lines, "p4a.hook", P4A_HOOK, section="app")
+    _upsert(
+        lines,
+        "android.extra_manifest_application_arguments",
+        MANIFEST_APP_ARGS_FILE,
+        section="app",
+    )
 
-    text = "\n".join(lines) + "\n"
-    if "android.permissions = RECORD_AUDIO" not in text:
-        text = PERMS + "\n" + text
-    spec_path.write_text(text, encoding="utf-8")
+    _dedupe_option(lines, "android.permissions")
+    _dedupe_option(lines, "p4a.hook")
+    _dedupe_option(lines, "android.extra_manifest_application_arguments")
+
+    spec_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
