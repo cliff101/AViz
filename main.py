@@ -14,7 +14,13 @@ _ROOT = Path(__file__).resolve().parent
 if str(_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(_ROOT / "src"))
 
-from aviz.app import run
-
 if __name__ == "__main__":
+    try:
+        from aviz.app import run
+    except Exception as exc:
+        from aviz.crash_report import report_fatal
+
+        report_fatal(exc, title="AViz failed to import")
+        raise
+
     run()

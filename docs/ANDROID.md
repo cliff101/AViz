@@ -72,14 +72,9 @@ Enable “Install unknown apps” for your file manager, copy `AViz-debug.apk` t
 
 The most common cause was a **missing `soundfile` module** at import time: `PlayerTab` loads `aviz.audio.decoder`, which used to `import soundfile` at module level even though the APK does not bundle it. Rebuild from a commit that lazy-imports `soundfile` (WAV analysis still works via the stdlib).
 
-To capture the real error on a device with USB debugging:
+On crash, AViz shows a **scrollable error dialog** on the phone (full traceback). The same text is saved as `last_crash.txt` under the app files directory (`…/files/aviz/`).
 
-```bash
-adb logcat -c
-adb logcat | grep -iE 'python|aviz|traceback|ModuleNotFound'
-```
-
-Then open the app and read the Python traceback in logcat.
+Optional: with USB debugging, `adb logcat` also shows Python tracebacks.
 
 ## Windows-only note
 
