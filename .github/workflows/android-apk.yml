@@ -81,7 +81,7 @@ jobs:
           test -n "${NDK}" && test -d "${NDK}"
           echo "ANDROID_SDK=${CACHE}/android-sdk" >> "${GITHUB_ENV}"
           echo "ANDROID_NDK=${NDK}" >> "${GITHUB_ENV}"
-          # API 35 is installed by pyside-setup main.py above (needed for pageSizeCompat + android.api=35)
+          # API 35 platform is installed by pyside-setup main.py above
 
       - name: Generate deployment files
         run: |

@@ -21,13 +21,6 @@ def verify(apk_path: str) -> int:
         if has_py314:
             errors.append("bundles Python 3.14 (cpython-314); pin python3==3.11.x in buildozer")
 
-        manifest = zf.read("AndroidManifest.xml")
-        if b"pageSizeCompat" not in manifest:
-            warnings.append(
-                "pageSizeCompat not visible in AndroidManifest.xml "
-                "(binary XML; confirm with aapt on device or p4a_hook log)"
-            )
-
     for w in warnings:
         print(f"WARN: {w}")
     for e in errors:

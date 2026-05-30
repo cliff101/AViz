@@ -23,8 +23,6 @@ REQUIRED_PERMISSIONS = (
 EXCLUDE_DIRS = "tests,scripts,.github,.buildozer,deployment,wheels,.venv,.git"
 # p4a numpy recipe requires ndk-api >= 24 (buildozer: android.minapi)
 NDK_MIN_API = "24"
-# android:pageSizeCompat is defined in API 35; compile with 31 → AAPT "attribute not found"
-ANDROID_API = "35"
 P4A_HOOK = "android/p4a_hook.py"
 
 
@@ -120,14 +118,13 @@ def patch(spec_path: Path) -> None:
             break
 
     _upsert(lines, "p4a.branch", "develop", section="app")
-    _upsert(lines, "android.api", ANDROID_API, section="app")
     _upsert(lines, "android.minapi", NDK_MIN_API, section="app")
     _upsert(lines, "source.exclude_dirs", EXCLUDE_DIRS, section="app")
     _upsert(lines, "log_level", "2", section="buildozer")
     _upsert(lines, "p4a.hook", P4A_HOOK, section="app")
     # Do not set android.extra_manifest_application_arguments: buildozer 1.5.0
-    # double-escapes values and breaks Gradle (see kivy/buildozer#1611). 16 KB
-    # pageSizeCompat is injected by android/p4a_hook.py instead.
+    # double-escapes values and breaks Gradle (see kivy/buildozer#1611).
+    # 16 KB: p4a_hook strips pageSizeCompat (PySide SDK cannot AAPT-link it).
     _remove_option(lines, "android.extra_manifest_application_arguments")
 
     _dedupe_option(lines, "android.permissions")
