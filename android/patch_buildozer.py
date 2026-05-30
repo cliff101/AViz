@@ -23,6 +23,8 @@ REQUIRED_PERMISSIONS = (
 EXCLUDE_DIRS = "tests,scripts,.github,.buildozer,deployment,wheels,.venv,.git"
 # p4a numpy recipe requires ndk-api >= 24 (buildozer: android.minapi)
 NDK_MIN_API = "24"
+# android:pageSizeCompat is defined in API 35; compile with 31 → AAPT "attribute not found"
+ANDROID_API = "35"
 P4A_HOOK = "android/p4a_hook.py"
 
 
@@ -118,6 +120,7 @@ def patch(spec_path: Path) -> None:
             break
 
     _upsert(lines, "p4a.branch", "develop", section="app")
+    _upsert(lines, "android.api", ANDROID_API, section="app")
     _upsert(lines, "android.minapi", NDK_MIN_API, section="app")
     _upsert(lines, "source.exclude_dirs", EXCLUDE_DIRS, section="app")
     _upsert(lines, "log_level", "2", section="buildozer")

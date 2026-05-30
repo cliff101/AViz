@@ -81,6 +81,8 @@ jobs:
           test -n "${NDK}" && test -d "${NDK}"
           echo "ANDROID_SDK=${CACHE}/android-sdk" >> "${GITHUB_ENV}"
           echo "ANDROID_NDK=${NDK}" >> "${GITHUB_ENV}"
+          # pageSizeCompat in manifest needs compile SDK 35 (android.api in patch_buildozer.py)
+          yes | "${CACHE}/android-sdk/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35"
 
       - name: Generate deployment files
         run: |
